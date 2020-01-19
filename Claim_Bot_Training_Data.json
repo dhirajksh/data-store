@@ -1,0 +1,1248 @@
+[
+  {
+    "workspace": {
+      "title": "Claim Request",
+      "discription": "Dialog is configured to handle insurance claim request scenarios",
+      "checkdefault": false,
+      "workspaceID": "1001",
+      "fbIntentRespone1": "Sorry unable to catch you. \nHere, we can help with claim request only.",
+      "fbIntentRespone2": "Sorry I am still learning to answer your queries, thanks for your patience.",
+      "sentiment_threshold":-3.5
+    },
+    "intent": [
+      {
+        "title": "welcome",
+        "purpose": "for welcome note",
+        "query": [
+          {
+            "text": "start"
+          },
+          {
+            "text": "begin"
+          },
+          {
+            "text": "start from beginning"
+          },
+          {
+            "text": "start over"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "conres",
+              "conres": [
+                {
+                  "condition": "!(@welcome_image)",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "Welcome!  The Claims bot is here to take you through the claim registration process."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "loopback",
+                  "lb": [
+                    {
+                      "condition": "!(@mobile_no)",
+                      "intent": "IdentifyCustomer"
+                    }
+                  ],
+                  "action": [
+                    {
+                      "condition": "!(@welcome_image)",
+                      "statement": [
+                        "msg.ke['welcome_image'] = true"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "next": {
+              "context": [
+                "welcome_image"
+              ],
+              "jumpto": "claim_enquiry"
+            }
+          }
+        ]
+      },
+      {
+        "title": "IdentifyCustomer",
+        "purpose": "To identify Customer",
+        "query": [],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "mobile_no",
+                  "serviceurl": "/api/mobilenumberprompt"
+                }
+              ]
+            },
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "prompt",
+                  "rentities": [
+                    {
+                      "entity": "policy_no",
+                      "serviceurl": "/api/policynumberprompt"
+                    }
+                  ],
+                  "action": [
+                    {
+                      "condition": "(policy_no)",
+                      "serviceurl": "/api/validatepolicyno"
+                    }
+                  ]
+                }
+              }
+            ],
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Thanks. Your policy# @policy_no is valid till @policy_end_date"
+                  }
+                ]
+              }
+            },
+            "next": {
+              "context": [
+                "mobile_no",
+                "policy_no",
+                "next_day"
+              ],
+              "loopback": []
+            }
+          }
+        ]
+      },
+      {
+        "title": "exit",
+        "purpose": "to exit from discussion",
+        "query": [
+          {
+            "text": "cancel"
+          },
+          {
+            "text": "exit"
+          },
+          {
+            "text": "get over"
+          },
+          {
+            "text": "terminate"
+          },
+          {
+            "text": "Don't share"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "exit_confirmed",
+                  "promptmsg": {
+                    "btnres": {
+                      "type": "gen",
+                      "caption": "Would you like to end the conversation?",
+                      "options": [
+                        {
+                          "name": "Yes",
+                          "value": "yes"
+                        },
+                        {
+                          "name": "No",
+                          "value": "no"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "action": [
+                {
+                  "condition": "msg.ce['confirmation']",
+                  "statement": [
+                    "msg.ke['exit_confirmed']=msg.ce['confirmation']"
+                  ]
+                }
+              ]
+            },
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@exit_confirmed=='yes'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, nice talking with you, will be happy to help you further.."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@exit_confirmed=='no' && msg.parent",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, lets continue with previous query.."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@exit_confirmed=='no' && !(msg.parent)",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, lets continue with our discussion..."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "next": {
+              "action": [
+                {
+                  "condition": "@exit_confirmed=='yes' && msg.parent",
+                  "statement": [
+                    "msg.parent = ''",
+                    "msg.action = 'exit'"
+                  ]
+                },
+                {
+                  "condition": "@exit_confirmed=='yes'",
+                  "statement": [
+                    "msg.action = 'exit'"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "negative_sentiment",
+        "purpose": "to exit from discussion",
+        "query": [],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "It seems that you are not happy with us, sorry for your inconvenience.."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "reset_session",
+        "purpose": "to reset user session",
+        "query": [
+          {
+            "text": "kindly reset the session"
+          },
+          {
+            "text": "clear session data"
+          },
+          {
+            "text": "clear my profile data"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "reset_confirmed",
+                  "promptmsg": {
+                    "btnres": {
+                      "type": "gen",
+                      "caption": "Do you want to reset your profile data?",
+                      "options": [
+                        {
+                          "name": "Yes",
+                          "value": "yes"
+                        },
+                        {
+                          "name": "No",
+                          "value": "no"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "action": [
+                {
+                  "condition": "msg.ce['confirmation']",
+                  "statement": [
+                    "msg.ke['reset_confirmed']=msg.ce['confirmation']"
+                  ]
+                }
+              ]
+            },
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@reset_confirmed=='yes'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "We have processed your request successfully, now you can start with fresh query."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@reset_confirmed=='no'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "Thanks."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "next": {
+              "action": [
+                {
+                  "condition": "@reset_confirmed=='yes' && msg.parent",
+                  "statement": [
+                    "msg.parent = ''",
+                    "msg.action = 'reset'"
+                  ]
+                },
+                {
+                  "condition": "@reset_confirmed=='yes'",
+                  "statement": [
+                    "msg.action = 'reset'"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Greetings",
+        "purpose": "To be greeting",
+        "query": [
+          {
+            "text": "good morning"
+          },
+          {
+            "text": "gud morning"
+          },
+          {
+            "text": "good mrng"
+          },
+          {
+            "text": "Hi"
+          },
+          {
+            "text": "hello"
+          }
+        ],
+        "keywords": [
+          {
+            "text": "Hello",
+            "synonyms": [
+              {
+                "synonym": "helo"
+              },
+              {
+                "synonym": "hellu"
+              }
+            ]
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@Time",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "very good @Time, how can I help you."
+                      },
+                      {
+                        "text": "very good @Time, will be happy to help you."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@Keywords=='hello'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "Hi, I am here to help you."
+                      },
+                      {
+                        "text": "Hi, how can i help you today?"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Hello, I am greatful to help you."
+                  },
+                  {
+                    "text": "Great to see you here, ask your queries."
+                  },
+                  {
+                    "text": "Hello, will be happy to help you."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "courtesy",
+        "purpose": "for gentility",
+        "query": [
+          {
+            "text": "that's great"
+          },
+          {
+            "text": "thats great"
+          },
+          {
+            "text": "No problem."
+          },
+          {
+            "text": "Thank you"
+          },
+          {
+            "text": " You're welcome"
+          },
+          {
+            "text": "Well done"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Thanks, we are happy to help you"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Emotions",
+        "purpose": "for snetiment",
+        "query": [
+          {
+            "text": " Ha ha ha!"
+          },
+          {
+            "text": " Wow!"
+          },
+          {
+            "text": "wow"
+          },
+          {
+            "text": "ha ha"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Cool, will be happy to help you further.."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Good Bye",
+        "purpose": "when people leaving the chat",
+        "query": [
+          {
+            "text": " Bye bye!"
+          },
+          {
+            "text": "good night"
+          },
+          {
+            "text": "bye"
+          },
+          {
+            "text": "see you"
+          },
+          {
+            "text": "catch you latter"
+          },
+          {
+            "text": "leaving now"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Bye bye....see you"
+                  },
+                  {
+                    "text": "bye\n"
+                  },
+                  {
+                    "text": "good bye"
+                  },
+                  {
+                    "text": "See you next time ...bye"
+                  },
+                  {
+                    "text": "nice to talk you"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "about me",
+        "purpose": "Would like to know about bot agent",
+        "query": [
+          {
+            "text": "please tell me about your self"
+          },
+          {
+            "text": "Who are you?"
+          },
+          {
+            "text": "May I know about you"
+          },
+          {
+            "text": "To whom am talking to?"
+          },
+          {
+            "text": "How can you help me"
+          },
+          {
+            "text": "What all you know?"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "I am bot agent, can take your order for tasty pizza"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "claim_enquiry",
+        "purpose": "Taking the insurance claim request from end user",
+        "query": [
+          {
+            "text": "How to file claim request"
+          },
+          {
+            "text": "Would like to submit the claim request"
+          },
+          {
+            "text": "Can I submit the Claim request"
+          },
+          {
+            "text": "How to get claim against my policy"
+          },
+          {
+            "text": "How to get claim against my policy"
+          },
+          {
+            "text": "My Samsung J 6 mobile is stolen, please help"
+          },
+          {
+            "text": "My Samsung J 6 phone fell and it broke"
+          },
+          {
+            "text": "My Samsung J 6 phone fell and it cracked from the side"
+          },
+          {
+            "text": "My Samsung J 6 mobile is hanging"
+          },
+          {
+            "text": "My Samsung J 6 phone has crashed and is lost"
+          },
+          {
+            "text": "My Samsung J 6 phone is not starting"
+          },
+          {
+            "text": "My Samsung J 6 phone is showing blank screen while using internet"
+          },
+          {
+            "text": "I am not able use my Samsung J 6 mobile as the touch screen is not functional"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "loopback",
+              "lb": [
+                {
+                  "condition": "!(@mobile_no)",
+                  "intent": "IdentifyCustomer"
+                }
+              ]
+            },
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "prompt",
+                  "rentities": [
+                    {
+                      "entity": "product_name",
+                      "serviceurl": "/api/productprompt"
+                    }
+                  ],
+                  "action": [
+                    {
+                      "condition": "(product_name)",
+                      "serviceurl": "/api/validateproduct"
+                    }
+                  ]
+                },
+                "dialog": [
+                  {
+                    "condition": "true",
+                    "slot": {
+                      "type": "prompt",
+                      "rentities": [
+                        {
+                          "entity": "claim_reason",
+                          "promptmsg": {
+                            "btnres": {
+                              "type": "gen",
+                              "caption": "Select a reason for this claim",
+                              "options": [
+                                {
+                                  "name": "Stolen",
+                                  "value": "stolen"
+                                },
+                                {
+                                  "name": "Broken",
+                                  "value": "broken"
+                                },
+                                {
+                                  "name": "Not Working",
+                                  "value": "not working"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      "action": [
+                        {
+                          "condition": "(msg.ke['nw_reason'])",
+                          "statement": [
+                            "msg.ke['claim_reason'] = 'not working'"
+                          ]
+                        }
+                      ]
+                    },
+                    "dialog": [
+                      {
+                        "condition": "@claim_reason=='stolen'",
+                        "slot": {
+                          "type": "prompt",
+                          "rentities": [
+                            {
+                              "entity": "stolen_proof",
+                              "promptmsg": {
+                                "txtres": [
+                                  {
+                                    "text": "Kindly share the FIR copy for stolen device."
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "action": [
+                            {
+                              "condition": "(msg.se && msg.se.document)",
+                              "statement": [
+                                "msg.ke['stolen_proof'] = msg.se.document.file_name"
+                              ]
+                            },
+                            {
+                              "condition": "(msg.se && msg.se.photo)",
+                              "statement": [
+                                "msg.ke['stolen_proof'] = msg.se.photo[0].file_id"
+                              ]
+                            }
+                          ]
+                        },
+                        "dialog": [
+                          {
+                            "condition": "true",
+                            "slot": {
+                              "type": "loopback",
+                              "lb": [
+                                {
+                                  "condition": "!(@claim_req_no)",
+                                  "intent": "claim_submission"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "ures": {
+                          "genres": {
+                            "txtres": [
+                              {
+                                "text": "Thanks for reaching us, team handling the stolen cases will contact you soon."
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "condition": "@claim_reason=='broken'",
+                        "slot": {
+                          "type": "prompt",
+                          "rentities": [
+                            {
+                              "entity": "broken_proof",
+                              "promptmsg": {
+                                "txtres": [
+                                  {
+                                    "text": "Kindly share the image of your broken device."
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "action": [
+                            {
+                              "condition": "(msg.se && msg.se.photo)",
+                              "statement": [
+                                "msg.ke['broken_proof'] = msg.se.photo[0].file_id"
+                              ]
+                            }
+                          ]
+                        },
+                        "dialog": [
+                          {
+                            "condition": "true",
+                            "slot": {
+                              "type": "loopback",
+                              "lb": [
+                                {
+                                  "condition": "!(@claim_req_no)",
+                                  "intent": "claim_submission"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "ures": {
+                          "genres": {
+                            "txtres": [
+                              {
+                                "text": "Thanks for reaching us, team handling the broken cases will contact you soon."
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "condition": "@claim_reason=='not working'",
+                        "slot": {
+                          "type": "prompt",
+                          "rentities": [
+                            {
+                              "entity": "nw_reason",
+                              "serviceurl": "/api/nwreasonprompt"
+                            }
+                          ]
+                        },
+                        "dialog": [
+                          {
+                            "condition": "true",
+                            "slot": {
+                              "type": "loopback",
+                              "lb": [
+                                {
+                                  "condition": "!(@claim_req_no)",
+                                  "intent": "claim_submission"
+                                }
+                              ]
+                            },
+                            "dialog": [
+                              {
+                                "condition": "true",
+                                "slot": {
+                                  "type": "prompt",
+                                  "rentities": [
+                                    {
+                                      "entity": "visit_time_slot",
+                                      "promptmsg": {
+                                        "btnres": {
+                                          "type": "gen",
+                                          "caption": "Our Repairer will attend to this claim within 48 hours. \nPlease suggest a convenient time slot for the visit.",
+                                          "options": [
+                                            {
+                                              "name": "9AM - 12PM",
+                                              "value": "9 to 12"
+                                            },
+                                            {
+                                              "name": "12PM - 3PM",
+                                              "value": "12 to 3"
+                                            },
+                                            {
+                                              "name": "3PM - 6PM",
+                                              "value": "3 to 6"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "ures": {
+                          "genres": {
+                            "txtres": [
+                              {
+                                "text": "Repairer’s visit is scheduled between @visit_time_slot on @next_day."
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "claim_submission",
+        "purpose": "Submit Claim Request",
+        "query": [],
+        "dialog": [
+          {
+            "condition": "true",
+            "next": {
+              "action": [
+                {
+                  "serviceurl": "/api/claimsubmission"
+                }
+              ],
+              "loopback": [
+                "claim_req_no"
+              ]
+            },
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Your claim request is registered successfully. \nKindly note the claim request number @claim_req_no for future reference."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "entity": [
+      {
+        "entityType": "visit_time_slot",
+        "input": [
+          {
+            "text": "9 to 12PM",
+            "value": "9AM - 12PM",
+            "synonyms": [
+              {
+                "synonym": "9AM-12PM"
+              },
+              {
+                "synonym": "9 to 12"
+              }
+            ]
+          },
+          {
+            "text": "12 to 3PM",
+            "value": "12PM - 3PM",
+            "synonyms": [
+              {
+                "synonym": "12PM-3PM"
+              },
+              {
+                "synonym": "12 to 3PM"
+              },
+              {
+                "synonym": "12 to 3"
+              }
+            ]
+          },
+          {
+            "text": "3 to 6PM",
+            "value": "3PM - 6PM",
+            "synonyms": [
+              {
+                "synonym": "3PM-6PM"
+              },
+              {
+                "synonym": "3 to 6PM"
+              },
+              {
+                "synonym": "3 to 6"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "Time",
+        "input": [
+          {
+            "text": "morning",
+            "synonyms": [
+              {
+                "synonym": "morng"
+              },
+              {
+                "synonym": "morn"
+              }
+            ]
+          },
+          {
+            "text": "evening"
+          },
+          {
+            "text": "after noon",
+            "synonyms": [
+              {
+                "synonym": "afternoon"
+              },
+              {
+                "synonym": "afternun"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "claim_reason",
+        "input": [
+          {
+            "text": "Stolen",
+            "value": "stolen",
+            "synonyms": [
+              {
+                "synonym": "Stole"
+              },
+              {
+                "synonym": "lost it"
+              },
+              {
+                "synonym": "got snatched"
+              },
+              {
+                "synonym": "robbery"
+              },
+              {
+                "synonym": "theft"
+              }
+            ]
+          },
+          {
+            "text": "Broken",
+            "value": "broken",
+            "synonyms": [
+              {
+                "synonym": "fell down"
+              },
+              {
+                "synonym": "fell and it broke"
+              },
+              {
+                "synonym": "cracked"
+              },
+              {
+                "synonym": "screen shattered"
+              },
+              {
+                "synonym": "damaged"
+              },
+              {
+                "synonym": "broked"
+              }
+            ]
+          },
+          {
+            "text": "Not Working",
+            "value": "not working"
+          }
+        ]
+      },
+      {
+        "entityType": "mobile_no",
+        "serviceurl": "/api/getMobileNumberEntityInput"
+      },
+      {
+        "entityType": "policy_no",
+        "serviceurl": "/api/getPolicyNumberEntityInput"
+      },
+      {
+        "entityType": "product_name",
+        "input": [
+          {
+            "text": "Samsung J6",
+            "synonyms": [
+              {
+                "synonym": "samsungj6"
+              },
+              {
+                "synonym": "J6"
+              }
+            ]
+          },
+          {
+            "text": "RedmiNote 8",
+            "synonyms": [
+              {
+                "synonym": "note8"
+              },
+              {
+                "synonym": "redmi8"
+              }
+            ]
+          },
+          {
+            "text": "Xiomi A2",
+            "synonyms": [
+              {
+                "synonym": "xiomia 2"
+              },
+              {
+                "synonym": "A2"
+              }
+            ]
+          },
+          {
+            "text": "Samsung M30",
+            "synonyms": [
+              {
+                "synonym": "M30"
+              },
+              {
+                "synonym": "samsungm 30"
+              }
+            ]
+          },
+          {
+            "text": "IPhone 6S",
+            "synonyms": [
+              {
+                "synonym": "6S"
+              },
+              {
+                "synonym": "iphone6"
+              }
+            ]
+          },
+          {
+            "text": "Moto G8 Play",
+            "synonyms": [
+              {
+                "synonym": "G8 play"
+              },
+              {
+                "synonym": "MotoG 8 Play"
+              },
+              {
+                "synonym": "MotoG 8"
+              }
+            ]
+          },
+          {
+            "text": "RedmiNote8 Pro",
+            "synonyms": [
+              {
+                "synonym": "Note8 Pro"
+              },
+              {
+                "synonym": "Redmi8 Pro"
+              }
+            ]
+          },
+          {
+            "text": "Samsung A30",
+            "synonyms": [
+              {
+                "synonym": "SamsungA 30"
+              },
+              {
+                "synonym": "A30"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "nw_reason",
+        "input": [
+          {
+            "text": "hanging"
+          },
+          {
+            "text": "heat up",
+            "synonyms": [
+              {
+                "synonym": "heated"
+              }
+            ]
+          },
+          {
+            "text": "charging",
+            "synonyms": [
+              {
+                "synonym": "not charging"
+              }
+            ]
+          },
+          {
+            "text": "slow",
+            "synonyms": [
+              {
+                "synonym": "speed issue"
+              }
+            ]
+          },
+          {
+            "text": "reboot",
+            "synonyms": [
+              {
+                "synonym": "reboots on its own"
+              }
+            ]
+          },
+          {
+            "text": "others",
+            "synonyms": [
+              {
+                "synonym": "stopped working"
+              },
+              {
+                "synonym": "stopped"
+              },
+              {
+                "synonym": "wifi stopped"
+              },
+              {
+                "synonym": "blank screen"
+              },
+              {
+                "synonym": "touch screen not responding"
+              },
+              {
+                "synonym": "not starting"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "confirmation",
+        "input": [
+          {
+            "text": "no",
+            "synonyms": [
+              {
+                "synonym": "n"
+              },
+              {
+                "synonym": "not"
+              }
+            ]
+          },
+          {
+            "text": "yes",
+            "synonyms": [
+              {
+                "synonym": "y"
+              },
+              {
+                "synonym": "ya"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

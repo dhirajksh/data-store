@@ -1,0 +1,1319 @@
+[
+  {
+    "workspace": {
+      "title": "Pizza Ordering",
+      "discription": "Dialog is configured to handle pizza ordering scenarios",
+      "checkdefault": false,
+      "workspaceID": "1000",
+      "fbIntentRespone1":"Sorry unable to catch you. \nHere, we can help with pizza ordering request only.",
+      "fbIntentRespone2":"Sorry I am still learning to answer your queries, thanks for your patience."
+    },
+    "intent": [
+      {
+        "title": "welcome",
+        "purpose": "for welcome note",
+        "query": [
+          {
+            "text": "start"
+          },
+          {
+            "text": "begin"
+          },
+          {
+            "text": "start from beginning"
+          },
+          {
+            "text": "start over"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "conres",
+              "conres": [
+                {
+                  "condition": "!(@welcome_image)",
+                  "ures": {
+                    "imgres": {
+                      "caption": "",
+                      "photo": "https://i.ibb.co/gzfz4h6/domino-welcome-image.png"
+                    }
+                  }
+                }
+              ]
+            },
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "loopback",
+                  "lb": [
+                    {
+                      "condition": "!(@contact_number)",
+                      "intent": "IdentifyCustomer"
+                    }
+                  ],
+                  "action": [
+                    {
+                      "condition": "!(@welcome_image)",
+                      "statement": [
+                        "msg.ke['welcome_image'] = true"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@contact_name",
+                  "ures": {
+                    "btnres": {
+                      "type": "gen",
+                      "caption": "Hello @contact_name, how can I assist you today?",
+                      "options": [
+                        {
+                          "name": "Order",
+                          "value": "pizza order"
+                        },
+                        {
+                          "name": "Re-order",
+                          "value": "reorder the previous one"
+                        },
+                        {
+                          "name": "Track",
+                          "value": "Track"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "next": {
+              "context": [
+                "welcome_image"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "IdentifyCustomer",
+        "purpose": "To identify Customer",
+        "query": [
+          {
+            "text": "Pappupasshogaya"
+          },
+          {
+            "text": "Pappupasshogaya"
+          },
+          {
+            "text": "Pappupasshogaya"
+          },
+          {
+            "text": "Pappupasshogaya"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "contact_number",
+                  "promptmsg": {
+                    "btnres": {
+                      "type": "con",
+                      "caption": "May I know your contact number.",
+                      "options": {
+                        "lblprimary": "Click here to share your mobile#",
+                        "lblcancel": ""
+                      }
+                    }
+                  }
+                }
+              ],
+              "action": [
+                {
+                  "condition": "(msg.se && msg.se.contact)",
+                  "statement": [
+                    "msg.ke['contact_number'] = msg.se.contact.phone_number",
+                    "msg.ke['contact_name'] = msg.se.contact.first_name"
+                  ]
+                }
+              ]
+            },
+            "next": {
+              "context": [
+                "contact_number",
+                "contact_name"
+              ],
+              "loopback": []
+            }
+          }
+        ]
+      },
+      {
+        "title": "exit",
+        "purpose": "to exit from discussion",
+        "query": [
+          {
+            "text": "cancel"
+          },
+          {
+            "text": "exit"
+          },
+          {
+            "text": "get over"
+          },
+          {
+            "text": "terminate"
+          },
+          {
+            "text": "Don't share"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "exit_confirmed",
+                  "promptmsg": {
+                    "btnres": {
+                      "type": "gen",
+                      "caption": "Would you like to end the conversation?",
+                      "options": [
+                        {
+                          "name": "Yes",
+                          "value": "yes"
+                        },
+                        {
+                          "name": "No",
+                          "value": "no"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "action": [
+                {
+                  "condition": "msg.ce['confirmation']",
+                  "statement": [
+                    "msg.ke['exit_confirmed']=msg.ce['confirmation']"
+                  ]
+                }
+              ]
+            },
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@exit_confirmed=='yes'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, nice talking with you, will be happy to help you further.."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@exit_confirmed=='no' && msg.parent",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, lets continue with previous query.."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@exit_confirmed=='no' && !(msg.parent)",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, lets continue with our discussion..."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "next": {
+              "action": [
+                {
+                  "condition": "@exit_confirmed=='yes' && msg.parent",
+                  "statement": [
+                    "msg.parent = ''",
+                    "msg.action = 'exit'"
+                  ]
+                },
+                {
+                  "condition": "@exit_confirmed=='yes'",
+                  "statement": [
+                    "msg.action = 'exit'"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "negative_sentiment",
+        "purpose": "to exit from discussion",
+        "query": [],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "It seems that you are not happy with us, sorry for your inconvenience.."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "reset_session",
+        "purpose": "to reset user session",
+        "query": [
+          {
+            "text": "kindly reset the session"
+          },
+          {
+            "text": "clear session data"
+          },
+          {
+            "text": "clear my profile data"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "prompt",
+              "rentities": [
+                {
+                  "entity": "reset_confirmed",
+                  "promptmsg": {
+                    "btnres": {
+                      "type": "gen",
+                      "caption": "Do you want to reset your context data?",
+                      "options": [
+                        {
+                          "name": "Yes",
+                          "value": "yes"
+                        },
+                        {
+                          "name": "No",
+                          "value": "no"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "action": [
+                {
+                  "condition": "msg.ce['confirmation']",
+                  "statement": [
+                    "msg.ke['reset_confirmed']=msg.ce['confirmation']"
+                  ]
+                }
+              ]
+            },
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@reset_confirmed=='yes'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "OK, lets start from scratch.."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@reset_confirmed=='no'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "ok, we are happy to help you further.."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "next": {
+              "action": [
+                {
+                  "condition": "@reset_confirmed=='yes' && msg.parent",
+                  "statement": [
+                    "msg.parent = ''",
+                    "msg.action = 'reset'"
+                  ]
+                },
+                {
+                  "condition": "@reset_confirmed=='yes'",
+                  "statement": [
+                    "msg.action = 'reset'"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Greetings",
+        "purpose": "To be greeting",
+        "query": [
+          {
+            "text": "good morning"
+          },
+          {
+            "text": "gud morning"
+          },
+          {
+            "text": "good mrng"
+          },
+          {
+            "text": "Hi"
+          },
+          {
+            "text": "hello"
+          }
+        ],
+        "keywords": [
+          {
+            "text": "Hello",
+            "synonyms": [
+              {
+                "synonym": "helo"
+              },
+              {
+                "synonym": "hellu"
+              }
+            ]
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "conres": [
+                {
+                  "condition": "@Time",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "very good @Time, how can I help you."
+                      },
+                      {
+                        "text": "very good @Time, will be happy to help you."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "@Keywords=='hello'",
+                  "ures": {
+                    "txtres": [
+                      {
+                        "text": "Hi, I am here to help you."
+                      },
+                      {
+                        "text": "Hi, how can i help you today?"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Hello, I am greatful to help you."
+                  },
+                  {
+                    "text": "Great to see you here, ask your queries."
+                  },
+                  {
+                    "text": "Hello, will be happy to help you."
+                  }
+                ]
+              }
+            },
+            "next": {
+              "jumpto": "welcome"
+            }
+          }
+        ]
+      },
+      {
+        "title": "courtesy",
+        "purpose": "for gentility",
+        "query": [
+          {
+            "text": "that's great"
+          },
+          {
+            "text": "thats great"
+          },
+          {
+            "text": "No problem."
+          },
+          {
+            "text": "Thank you"
+          },
+          {
+            "text": " You're welcome"
+          },
+          {
+            "text": "Well done"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Thanks, we are happy to help you"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Emotions",
+        "purpose": "for snetiment",
+        "query": [
+          {
+            "text": " Ha ha ha!"
+          },
+          {
+            "text": " Wow!"
+          },
+          {
+            "text": "wow"
+          },
+          {
+            "text": "ha ha"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Cool, will be happy to help you further.."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Good Bye",
+        "purpose": "when people leaving the chat",
+        "query": [
+          {
+            "text": " Bye bye!"
+          },
+          {
+            "text": "good night"
+          },
+          {
+            "text": "bye"
+          },
+          {
+            "text": "see you"
+          },
+          {
+            "text": "catch you latter"
+          },
+          {
+            "text": "leaving now"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "Bye bye....see you"
+                  },
+                  {
+                    "text": "bye\n"
+                  },
+                  {
+                    "text": "good bye"
+                  },
+                  {
+                    "text": "See you next time ...bye"
+                  },
+                  {
+                    "text": "nice to talk you"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "about me",
+        "purpose": "Would like to know about bot agent",
+        "query": [
+          {
+            "text": "please tell me about your self"
+          },
+          {
+            "text": "Who are you?"
+          },
+          {
+            "text": "May I know about you"
+          },
+          {
+            "text": "To whom am talking to?"
+          },
+          {
+            "text": "How can you help me"
+          },
+          {
+            "text": "What all you know?"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "ures": {
+              "genres": {
+                "txtres": [
+                  {
+                    "text": "I am bot agent, can take your order for tasty pizza"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "order_detail",
+        "purpose": "compile the order detail",
+        "query": [],
+        "dialog": [
+          {
+            "condition": "true",
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "prompt",
+                  "rentities": [
+                    {
+                      "entity": "pizza_menu",
+                      "serviceurl": "/api/menuprompt"
+                    }
+                  ]
+                },
+                "dialog": [
+                  {
+                    "condition": "true",
+                    "slot": {
+                      "type": "prompt",
+                      "rentities": [
+                        {
+                          "entity": "pizza_size",
+                          "promptmsg": {
+                            "btnres": {
+                              "type": "gen",
+                              "caption": "What pizza size would you like to order?",
+                              "options": [
+                                {
+                                  "name": "Medium",
+                                  "value": "medium"
+                                },
+                                {
+                                  "name": "Large",
+                                  "value": "large"
+                                },
+                                {
+                                  "name": "Chairman",
+                                  "value": "chairman"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "entity": "extra_toppings",
+                          "promptmsg": {
+                            "btnres": {
+                              "type": "gen",
+                              "caption": "Would you like to add some of our delicious extra toppings?",
+                              "options": [
+                                {
+                                  "name": "Yes",
+                                  "value": "yes"
+                                },
+                                {
+                                  "name": "No",
+                                  "value": "no"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      "action": [
+                        {
+                          "condition": "@pizza_toppings",
+                          "statement": [
+                            "msg.ke['extra_toppings']='yes'"
+                          ]
+                        },
+                        {
+                          "condition": "msg.ke['confirmation']",
+                          "statement": [
+                            "msg.ke['extra_toppings']=msg.ke['confirmation']"
+                          ]
+                        }
+                      ]
+                    },
+                    "dialog": [
+                      {
+                        "condition": "@extra_toppings=='yes'",
+                        "slot": {
+                          "type": "prompt",
+                          "rentities": [
+                            {
+                              "entity": "pizza_toppings",
+                              "promptmsg": {
+                                "txtres": [
+                                  {
+                                    "text": "OK, which toppings would you like? We have pepperoni, sausage, beef, cheese, onions and mushroom."
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "ures": {
+                          "genres": {
+                            "txtres": [
+                              {
+                                "text": "OK, adding toppings to your pizza."
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "condition": "@extra_toppings=='no'",
+                        "ures": {
+                          "genres": {
+                            "txtres": [
+                              {
+                                "text": "OK, will proceed without toppings"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "next": {
+                  "action": [
+                    {
+                      "condition": "@extra_toppings == 'yes'",
+                      "statement": [
+                        "msg.ke['order_detail'] = '*' + @pizza_menu + '* pizza of size *' + @pizza_size + '* with *' + @pizza_toppings + '* toppings'"
+                      ]
+                    },
+                    {
+                      "condition": "@extra_toppings == 'no'",
+                      "statement": [
+                        "msg.ke['order_detail'] = '*' + @pizza_menu + '* pizza of size *' + @pizza_size + '*'"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "next": {
+              "loopback": [
+                "order_detail"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "pizza_order",
+        "purpose": "Taking the pizza order request from end user",
+        "query": [
+          {
+            "text": "I am hungry"
+          },
+          {
+            "text": "I'd like a pizza"
+          },
+          {
+            "text": "I want to order a pizza"
+          },
+          {
+            "text": "I want to order a large pizza"
+          },
+          {
+            "text": "Can I get a pizza margherita, small please"
+          },
+          {
+            "text": "za"
+          },
+          {
+            "text": "order"
+          }
+        ],
+        "dialog": [
+          {
+            "condition": "true",
+            "slot": {
+              "type": "loopback",
+              "lb": [
+                {
+                  "condition": "!(@contact_number)",
+                  "intent": "IdentifyCustomer"
+                }
+              ]
+            },
+            "dialog": [
+              {
+                "condition": "true",
+                "slot": {
+                  "type": "prompt",
+                  "rentities": [
+                    {
+                      "entity": "pizza_service",
+                      "promptmsg": {
+                        "btnres": {
+                          "type": "gen",
+                          "caption": "Is this for Delivery or Carryout?",
+                          "options": [
+                            {
+                              "name": "Carryout",
+                              "value": "carryout"
+                            },
+                            {
+                              "name": "Delivery",
+                              "value": "delivery"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                "dialog": [
+                  {
+                    "condition": "@pizza_service=='carryout'",
+                    "slot": {
+                      "type": "prompt",
+                      "rentities": [
+                        {
+                          "entity": "customer_location",
+                          "promptmsg": {
+                            "btnres": {
+                              "type": "loc",
+                              "caption": "Need your location to select nearby stores",
+                              "options": {
+                                "lblprimary": "Click here to share your current location",
+                                "lblcancel": "Don't share"
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "action": [
+                        {
+                          "condition": "(msg.se && msg.se.location)",
+                          "statement": [
+                            "msg.ke['customer_location'] = 'Latitude - ' + msg.se.location.latitude + ' & Longitude - ' + msg.se.location.longitude"
+                          ]
+                        }
+                      ]
+                    },
+                    "dialog": [
+                      {
+                        "condition": "true",
+                        "slot": {
+                          "type": "prompt",
+                          "rentities": [
+                            {
+                              "entity": "pizza_outlet",
+                              "promptmsg": {
+                                "btnres": {
+                                  "type": "gen",
+                                  "caption": "Select the outlet",
+                                  "options": [
+                                    {
+                                      "name": "Akure Mall",
+                                      "value": "Akure Mall 9087725490"
+                                    },
+                                    {
+                                      "name": "Polo Park",
+                                      "value": "Polo Park 9087688115"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "dialog": [
+                          {
+                            "condition": "true",
+                            "slot": {
+                              "type": "loopback",
+                              "lb": [
+                                {
+                                  "condition": "!(@order_detail)",
+                                  "intent": "order_detail"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "ures": {
+                      "genres": {
+                        "txtres": [
+                          {
+                            "text": "Your order for @order_detail has been confirmed. \nYou can pickup your pizza in next 30 minutes from:\n *@pizza_outlet*"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "condition": "@pizza_service=='delivery'",
+                    "slot": {
+                      "type": "prompt",
+                      "rentities": [
+                        {
+                          "entity": "customer_location",
+                          "promptmsg": {
+                            "btnres": {
+                              "type": "loc",
+                              "caption": "Need your location to select nearby stores",
+                              "options": {
+                                "lblprimary": "Click here to share your current location",
+                                "lblcancel": "Don't share"
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "action": [
+                        {
+                          "condition": "(msg.se && msg.se.location)",
+                          "statement": [
+                            "msg.ke['customer_location'] = 'Latitude - ' + msg.se.location.latitude + ' & Longitude - ' + msg.se.location.longitude"
+                          ]
+                        }
+                      ]
+                    },
+                    "dialog": [
+                      {
+                        "condition": "true",
+                        "slot": {
+                          "type": "loopback",
+                          "lb": [
+                            {
+                              "condition": "!(@order_detail)",
+                              "intent": "order_detail"
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "ures": {
+                      "genres": {
+                        "txtres": [
+                          {
+                            "text": "Your order for @order_detail has been confirmed. \nIt will be delivered to you in next 30 minutes at:\n @customer_location"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "entity": [
+      {
+        "entityType": "pizza_outlet",
+        "input": [
+          {
+            "text": "Akure Mall 9087725490"
+          },
+          {
+            "text": "Polo Park 9087688115"
+          }
+        ]
+      },
+      {
+        "entityType": "pizza_service",
+        "input": [
+          {
+            "text": "carryout",
+            "synonyms": [
+              {
+                "synonym": "carry out"
+              },
+              {
+                "synonym": "pick up"
+              },
+              {
+                "synonym": "pickup"
+              }
+            ]
+          },
+          {
+            "text": "delivery"
+          }
+        ]
+      },
+      {
+        "entityType": "Time",
+        "input": [
+          {
+            "text": "morning",
+            "synonyms": [
+              {
+                "synonym": "morng"
+              },
+              {
+                "synonym": "morn"
+              }
+            ]
+          },
+          {
+            "text": "evening"
+          },
+          {
+            "text": "after noon",
+            "synonyms": [
+              {
+                "synonym": "afternoon"
+              },
+              {
+                "synonym": "afternun"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "pizza_category",
+        "input": [
+          {
+            "text": "Premiums",
+            "synonyms": [
+              {
+                "synonym": "prem"
+              },
+              {
+                "synonym": "premiu"
+              }
+            ]
+          },
+          {
+            "text": "Favourites",
+            "synonyms": [
+              {
+                "synonym": "favour"
+              },
+              {
+                "synonym": "favourit"
+              }
+            ]
+
+          },
+          {
+            "text": "Classics",
+            "synonyms": [
+              {
+                "synonym": "class"
+              },
+              {
+                "synonym": "classi"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "pizza_menu",
+        "input": [
+          {
+            "text": "chicken bali",
+            "type": "premiums",
+            "synonyms": [
+              {
+                "synonym": "chicken b"
+              },
+              {
+                "synonym": "chicken balu"
+              }
+            ]
+          },
+          {
+            "text": "extravaganzza",
+            "type": "premiums",
+            "synonyms": [
+              {
+                "synonym": "extravagan"
+              },
+              {
+                "synonym": "extravaganza"
+              }
+            ]
+          },
+          {
+            "text": "meatzza",
+            "type": "premiums",
+            "synonyms": [
+              {
+                "synonym": "meatza"
+              },
+              {
+                "synonym": "meatz"
+              }
+            ]
+          },
+          {
+            "text": "chicken supreme",
+            "type": "premiums",
+            "synonyms": [
+              {
+                "synonym": "chicken suprem"
+              },
+              {
+                "synonym": "chicken suprime"
+              }
+            ]
+          },
+          {
+            "text": "chicken suya",
+            "type": "favourites",
+            "synonyms": [
+              {
+                "synonym": "chicken soya"
+              },
+              {
+                "synonym": "chicken sua"
+              }
+            ]
+          },
+          {
+            "text": "delux",
+            "type": "favourites",
+            "synonyms": [
+              {
+                "synonym": "dilux"
+              },
+              {
+                "synonym": "deluxe"
+              }
+            ]
+          },
+          {
+            "text": "chicken tikka",
+            "type": "favourites",
+            "synonyms": [
+              {
+                "synonym": "chicken t"
+              },
+              {
+                "synonym": "chicken tika"
+              }
+            ]
+          },
+          {
+            "text": "spiced chicken",
+            "type": "favourites"
+          },
+          {
+            "text": "southern style bbq chicken",
+            "type": "favourites"
+          },
+          {
+            "text": "beef suya",
+            "type": "favourites"
+          },
+          {
+            "text": "smoked bbq sausage",
+            "type": "favourites"
+          },
+          {
+            "text": "sweet n hot",
+            "type": "favourites",
+            "synonyms": [
+              {
+                "synonym": "sweet and hot"
+              },
+              {
+                "synonym": "sweet hot"
+              }
+            ]
+          },
+          {
+            "text": "pepperoni supreme",
+            "type": "classics",
+            "synonyms": [
+              {
+                "synonym": "pepperoni"
+              },
+              {
+                "synonym": "peproni"
+              }
+            ]
+          },
+          {
+            "text": "vegetarian",
+            "type": "classics",
+            "synonyms": [
+              {
+                "synonym": "vege"
+              },
+              {
+                "synonym": "veg"
+              }
+            ]
+          },
+          {
+            "text": "bbq beef",
+            "type": "classics"
+          },
+          {
+            "text": "bbq chicken",
+            "type": "classics"
+          },
+          {
+            "text": "meatpie",
+            "type": "classics"
+          },
+          {
+            "text": "chicken pie",
+            "type": "classics"
+          }
+        ]
+      },
+      {
+        "entityType": "pizza_toppings",
+        "input": [
+          {
+            "text": "mushrooms",
+            "synonyms": [
+              {
+                "synonym": "mushroom"
+              }
+            ]
+          },
+          {
+            "text": "pepperoni"
+          },
+          {
+            "text": "sausage"
+          },
+          {
+            "text": "beef"
+          },
+          {
+            "text": "cheese"
+          },
+          {
+            "text": "onion"
+          }
+        ],
+        "selType": "P"
+      },
+      {
+        "entityType": "confirmation",
+        "input": [
+          {
+            "text": "no",
+            "synonyms": [
+              {
+                "synonym": "n"
+              },
+              {
+                "synonym": "not"
+              }
+            ]
+          },
+          {
+            "text": "yes",
+            "synonyms": [
+              {
+                "synonym": "y"
+              },
+              {
+                "synonym": "ya"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entityType": "pizza_size",
+        "input": [
+          {
+            "text": "large"
+          },
+          {
+            "text": "medium",
+            "synonyms": [
+              {
+                "synonym": "regular"
+              }
+            ]
+          },
+          {
+            "text": "chairman"
+          }
+        ]
+      }
+    ]
+  }
+]
